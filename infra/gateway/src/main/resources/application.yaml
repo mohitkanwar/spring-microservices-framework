@@ -1,0 +1,56 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      routes:
+        - id: eureka-client
+          uri: lb://EUREKA-CLIENT
+          predicates:
+            - Path=/eureka-client/**
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8082/realms/customers
+      client:
+        registration:
+          keycloak:
+            client-id: gateway-client
+            client-secret: HPSzCoP0Q96xqm77vEhaigkMhmn4vZ1B
+            scope: openid,profile,email
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+        provider:
+          keycloak:
+            authorization-uri: http://localhost:8082/realms/customers/protocol/openid-connect/auth
+            token-uri: http://localhost:8082/realms/customers/protocol/openid-connect/token
+            user-info-uri: http://localhost:8082/realms/customers/protocol/openid-connect/userinfo
+            jwk-set-uri: http://localhost:8082/realms/customers/protocol/openid-connect/certs
+            user-name-attribute: preferred_username
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+application:
+  routes:
+    publicRoutes:
+      - name: eureka_route
+        path: /eureka/**
+        uri: http://localhost:8761/eureka/
+      - name: fd_interest_calculator_route
+        path: /calculator/fd/interest/p
+        uri: lb://CALCULATORS-SERVICE
+
+    authenticatedRoutes:
+      - name: fd_interest_calculator_route
+        path: /calculator/fd/interest
+        uri: lb://CALCULATORS-SERVICE
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: DEBUG
